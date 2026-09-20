@@ -30,10 +30,4 @@ func TestGetAPIKey(t *testing.T) {
 			t.Fatal("GetAPIKey() expected error, got nil")
 		}
 	})
-
-	t.Run("returns error when API key is missing", func(t *testing.T) {
-
-		t.Fatal("GetAPIKey() fake error")
-
-	})
 }
