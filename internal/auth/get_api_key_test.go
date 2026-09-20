@@ -1,33 +1,62 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 )
 
 func TestGetAPIKey(t *testing.T) {
-	t.Run("returns API key", func(t *testing.T) {
-		headers := http.Header{}
-		headers.Set("Authorization", "ApiKey test-key")
+	tests := []struct {
+		key       string
+		value     string
+		expect    string
+		expectErr string
+	}{
+		{
+			expectErr: "no authorization header",
+		},
+		{
+			key:       "Authorization",
+			expectErr: "no authorization header",
+		},
+		{
+			key:       "Authorization",
+			value:     "-",
+			expectErr: "malformed authorization header",
+		},
+		{
+			key:       "Authorization",
+			value:     "Bearer xxxxxx",
+			expectErr: "malformed authorization header",
+		},
+		{
+			key:       "Authorization",
+			value:     "ApiKey xxxxxx",
+			expect:    "xxxxxx",
+			expectErr: "not expecting an error",
+		},
+	}
 
-		req := &http.Request{Header: headers}
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("TestGetAPIKey Case #%v:", i), func(t *testing.T) {
+			header := http.Header{}
+			header.Add(test.key, test.value)
 
-		got, err := GetAPIKey(req.Header)
-		if err != nil {
-			t.Fatalf("GetAPIKey() error = %v", err)
-		}
+			output, err := GetAPIKey(header)
+			if err != nil {
+				if strings.Contains(err.Error(), test.expectErr) {
+					return
+				}
+				t.Errorf("Unexpected: TestGetAPIKey:%v\n", err)
+				return
+			}
 
-		if got != "test-key" {
-			t.Errorf("GetAPIKey() = %q, want %q", got, "test-key")
-		}
-	})
-
-	t.Run("returns error when API key is missing", func(t *testing.T) {
-		req := &http.Request{Header: http.Header{}}
-
-		_, err := GetAPIKey(req.Header)
-		if err == nil {
-			t.Fatal("GetAPIKey() expected error, got nil")
-		}
-	})
+			if output != test.expect {
+				t.Errorf("Unexpected: TestGetAPIKey:%s", output)
+				return
+			}
+		})
+	}
 }
