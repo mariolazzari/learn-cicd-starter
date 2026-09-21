@@ -22,4 +22,4 @@ jobs:
         run: go test ./... -cover
 
       - name: Format code
-        run: go fmt ./...
+        run: test -z "$(gofmt -l .)"
